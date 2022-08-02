@@ -70,11 +70,7 @@ class Row(object):
 
             value = self._row[i]
 
-            if six.PY3:
-                return str(value or '')
-            else:
-                return unicode(value or '')
-
+            return str(value or '') if six.PY3 else unicode(value or '')
         if i not in self._columns:
             return Error('COPY.%s.%i.%s [column does not exist in sheet]' % (
                 self._sheet.name,
@@ -84,10 +80,7 @@ class Row(object):
 
         value = self._row[self._columns.index(i)]
 
-        if six.PY3:
-            return str(value or '')
-        else:
-            return unicode(value or '')
+        return str(value or '') if six.PY3 else unicode(value or '')
 
     def __iter__(self):
         return iter(self._row)
@@ -100,10 +93,9 @@ class Row(object):
             value = self._row[self._columns.index('value')]
             return str(value or '')
 
-        return Error('COPY.%s.%s [no value column in sheet]' % (
-            self._sheet.name,
-            self._row[self._columns.index('key')]
-        ))
+        return Error(
+            f"COPY.{self._sheet.name}.{self._row[self._columns.index('key')]} [no value column in sheet]"
+        )
 
     def __html__(self):
         return self.__str__()
@@ -112,22 +104,14 @@ class Row(object):
         if 'value' in self._columns:
             val = self._row[self._columns.index('value')]
 
-            if not val:
-                return False
-
-            return bool(len(val))
-
+            return bool(len(val)) if val else False
         return True
 
     def __nonzero__(self):
         if 'value' in self._columns:
             val = self._row[self._columns.index('value')]
 
-            if not val:
-                return False
-
-            return bool(len(val))
-
+            return bool(len(val)) if val else False
         return True
 
 
@@ -162,19 +146,13 @@ class Sheet(object):
             return self._sheet[i]
 
         if 'key' not in self._columns:
-            return Error('COPY.%s.%s [no key column in sheet]' % (
-                self.name,
-                i
-            ))
+            return Error(f'COPY.{self.name}.{i} [no key column in sheet]')
 
         for row in self._sheet:
             if row['key'] == i:
                 return row
 
-        return Error('COPY.%s.%s [key does not exist in sheet]' % (
-            self.name,
-            i
-        ))
+        return Error(f'COPY.{self.name}.{i} [key does not exist in sheet]')
 
     def __iter__(self):
         return iter(self._sheet)
@@ -237,7 +215,7 @@ class Copy(object):
         Allow dict-style item access by sheet name.
         """
         if name not in self._copy:
-            return Error('COPY.%s [sheet does not exist]' % name)
+            return Error(f'COPY.{name} [sheet does not exist]')
 
         return self._copy[name]
 
@@ -275,29 +253,21 @@ class Copy(object):
 
                 row_data = []
 
-                for c in row[0:len(columns)]:
+                for c in row[:len(columns)]:
                     d = c.internal_value
 
                     if d is None:
                         row_data.append(None)
+                    elif six.PY3:
+                        row_data.append(str(d))
                     else:
-                        if six.PY3:
-                            row_data.append(str(d))
-                        else:
-                            row_data.append(unicode(d))
+                        row_data.append(unicode(d))
 
                 # If nothing in a row then it doesn't matter
-                if all([c is None for c in row_data]):
+                if all(c is None for c in row_data):
                     continue
 
-                clean_data = {}
-
-                # Don't include columns with None headers
-                for i, c in enumerate(columns):
-                    if c is None:
-                        continue
-
-                    clean_data[c] = row_data[i]
+                clean_data = {c: row_data[i] for i, c in enumerate(columns) if c is not None}
 
                 rows.append(clean_data)
 

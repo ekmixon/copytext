@@ -131,8 +131,8 @@ class KeyValueRowTestCase(unittest.TestCase):
 
     def test_null_cell_value(self):
         row = self.sheet['nothing']
-        self.assertIs(True if row else False, False)
-        self.assertIs(True if row[1] else False, False)
+        self.assertIs(bool(row), False)
+        self.assertIs(bool(row[1]), False)
 
     def test_cell_by_index(self):
         cell = self.row[1]
@@ -159,8 +159,8 @@ class KeyValueRowTestCase(unittest.TestCase):
         self.assertEquals(error._error, 'COPY.content.0.2 [column index outside range]')
 
     def test_row_truthiness(self):
-        self.assertIs(True if self.sheet['foo'] else False, False)
-        self.assertIs(True if self.sheet['header_title'] else False, True)
+        self.assertIs(bool(self.sheet['foo']), False)
+        self.assertIs(bool(self.sheet['header_title']), True)
 
 class ListRowTestCase(unittest.TestCase):
     def setUp(self):
@@ -184,11 +184,11 @@ class ListRowTestCase(unittest.TestCase):
     def test_row_truthiness(self):
         row = self.sheet[0]
 
-        self.assertIs(True if row else False, True)
-        
+        self.assertIs(bool(row), True)
+
         row = self.sheet[100]
-        
-        self.assertIs(True if row else False, False)
+
+        self.assertIs(bool(row), False)
 
 class GoogleDocsTestCase(unittest.TestCase):
     """
@@ -286,4 +286,4 @@ class ErrorTestCase(unittest.TestCase):
         self.assertEqual(str(self.error), 'foobar')
 
     def test_falsey(self):
-        self.assertIs(True if self.error else False, False)
+        self.assertIs(bool(self.error), False)
